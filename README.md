@@ -4,7 +4,7 @@
 [![Actions Status](https://github.com/Samsung/walrus/actions/workflows/actions.yml/badge.svg)](https://github.com/Samsung/walrus/actions)
 [![Coverity Scan Build Status](https://scan.coverity.com/projects/26942/badge.svg)](https://scan.coverity.com/projects/samsung-walrus)
 
-This project aims to provide a lightweight WebAssembly runtime engine. It now fully supports WebAssembly specs with an simple interpreter, but we plan to optimize interpreting as well as adopting JIT compiler for better performance.
+[WIP] This project aims to provide a lightweight WebAssembly runtime engine. It supports WebAssembly specs with an simple interpreter, but we plan to optimize interpreting as well as adopting JIT compiler for better performance.
 
 ## Cloning
 
