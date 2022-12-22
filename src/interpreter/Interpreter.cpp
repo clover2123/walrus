@@ -43,11 +43,7 @@ OpcodeTable::OpcodeTable()
     // Dummy bytecode execution to initialize the OpcodeTable.
     ExecutionState dummyState;
     ByteCode b;
-#if defined(WALRUS_ENABLE_COMPUTED_GOTO_WITH_ASMLABEL)
-    b.m_opcodeInAddress = reinterpret_cast<void*>(FillByteCodeOpcodeTableAsmLbl);
-#else
-    b.m_opcodeInAddress = nullptr;
-#endif
+    b.m_opcodeInAddress = reinterpret_cast<void*>(&FillByteCodeOpcodeTableAsmLbl[0]);
     size_t pc = reinterpret_cast<size_t>(&b);
     uint8_t* bp = nullptr;
     uint8_t* sp = nullptr;
@@ -274,12 +270,6 @@ void Interpreter::interpret(ExecutionState& state,
 #define DEFINE_OPCODE(codeName) codeName##OpcodeLbl
 #define DEFINE_DEFAULT
 #define NEXT_INSTRUCTION() goto NextInstruction;
-
-#if !defined(WALRUS_ENABLE_COMPUTED_GOTO_WITH_ASMLABEL)
-    if (UNLIKELY(((ByteCode*)programCounter)->m_opcodeInAddress == nullptr)) {
-        goto FillOpcodeTableOpcodeLbl;
-    }
-#endif
 
 NextInstruction:
     /* Execute first instruction. */
