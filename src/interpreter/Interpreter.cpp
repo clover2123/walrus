@@ -64,7 +64,7 @@ ByteCodeStackOffset* Interpreter::interpret(ExecutionState& state,
     while (true) {
         try {
             return interpret(state, programCounter, bp, instance, instance->m_memory.data(), instance->m_table.data(), instance->m_global.data());
-        } catch (std::unique_ptr<Exception>& e) {
+        } catch (const Exception* e) {
             for (size_t i = e->m_programCounterInfo.size(); i > 0; i--) {
                 if (e->m_programCounterInfo[i - 1].first == &state) {
                     programCounter = e->m_programCounterInfo[i - 1].second;
@@ -92,7 +92,7 @@ ByteCodeStackOffset* Interpreter::interpret(ExecutionState& state,
                     continue;
                 }
             }
-            throw std::unique_ptr<Exception>(std::move(e));
+            throw e;
         }
     }
 }

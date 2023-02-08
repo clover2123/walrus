@@ -27,28 +27,27 @@ class Tag;
 
 class Exception : public gc {
 public:
-    // we should use exception value as NoGC since bdwgc cannot find thrown value
-    static std::unique_ptr<Exception> create(String* m)
+    static Exception* create(String* m)
     {
-        return std::unique_ptr<Exception>(new (NoGC) Exception(m));
+        return new Exception(m);
     }
 
-    static std::unique_ptr<Exception> create(ExecutionState& state, String* m)
+    static Exception* create(ExecutionState& state, String* m)
     {
-        return std::unique_ptr<Exception>(new (NoGC) Exception(state, m));
+        return new Exception(state, m);
     }
 
-    static std::unique_ptr<Exception> create(ExecutionState& state, Tag* tag, Vector<uint8_t, GCUtil::gc_malloc_atomic_allocator<uint8_t>>&& userExceptionData)
+    static Exception* create(ExecutionState& state, Tag* tag, Vector<uint8_t, GCUtil::gc_malloc_atomic_allocator<uint8_t>>&& userExceptionData)
     {
-        return std::unique_ptr<Exception>(new (NoGC) Exception(state, tag, std::move(userExceptionData)));
+        return new Exception(state, tag, std::move(userExceptionData));
     }
 
-    bool isBuiltinException()
+    bool isBuiltinException() const
     {
         return !!message();
     }
 
-    bool isUserException()
+    bool isUserException() const
     {
         return !!tag();
     }

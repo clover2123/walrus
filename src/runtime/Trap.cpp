@@ -25,8 +25,8 @@ Trap::TrapResult Trap::run(void (*runner)(ExecutionState&, void*), void* data)
     try {
         ExecutionState state;
         runner(state, data);
-    } catch (std::unique_ptr<Exception>& e) {
-        r.exception = std::move(e);
+    } catch (const Exception* e) {
+        r.exception = e;
     }
 
     return r;
@@ -47,9 +47,9 @@ void Trap::throwException(ExecutionState& state, Tag* tag, Vector<uint8_t, GCUti
     throw Exception::create(state, tag, std::move(userExceptionData));
 }
 
-void Trap::throwException(ExecutionState& state, std::unique_ptr<Exception>&& e)
+void Trap::throwException(ExecutionState& state, const Exception* e)
 {
-    throw std::move(e);
+    throw e;
 }
 
 } // namespace Walrus
