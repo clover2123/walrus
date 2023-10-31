@@ -16,6 +16,11 @@
 
 /* Only included by jit-backend.cc */
 
+#if defined(COMPILER_MSVC)
+#include <intrin.h>
+#define __builtin_popcount __popcnt
+#endif
+
 struct JITArgPair {
     JITArgPair(Operand* operand)
     {
@@ -549,7 +554,7 @@ static void emitDivRem64(sljit_compiler* compiler, sljit_s32 opcode, JITArgPair*
         break;
     }
 
-    sljit_s32 argTypes = isImm ? SLJIT_ARGS3(VOID, W, W, W) : SLJIT_ARGS3(W, W, W, W);
+    sljit_s32 argTypes = isImm ? SLJIT_ARGS3(V, W, W, W) : SLJIT_ARGS3(W, W, W, W);
     sljit_emit_icall(compiler, SLJIT_CALL, argTypes, SLJIT_IMM, addr);
 
     if (!isImm) {

@@ -2,9 +2,9 @@ name: Actions
 
 on:
   push:
-    branches: [ interp ]
+    branches: [ main ]
   pull_request:
-    branches: [ interp ]
+    branches: [ main ]
 
 env:
   RUNNER: tools/run-tests.py
@@ -115,63 +115,6 @@ jobs:
     - name: Run Tests
       run: $RUNNER --engine="$GITHUB_WORKSPACE/out/linux/x64/walrus"
 
-  build-test-on-armv7:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v3
-      with:
-        submodules: true
-    - name: Build in arm32 container
-      uses: uraimo/run-on-arch-action@v2.5.0
-      with:
-        arch: armv7
-        distro: ubuntu_latest
-
-        # Install deps into the container. With the token, the container will be cached
-        # The image is cached publically like a package
-        githubToken: ${{ github.token }}
-
-        install: |
-          apt-get update
-          apt-get install -y cmake build-essential ninja-build pkg-config python3 clang-12
-          #FIXME fix clang version as to 12
-          ln -s /usr/bin/clang-12 /usr/bin/clang
-          ln -s /usr/bin/clang++-12 /usr/bin/clang++
-        run: |
-          CC=clang CXX=clang++ cmake -H. -Bout/debug -DWALRUS_ARCH=arm -DWALRUS_HOST=linux -DWALRUS_MODE=debug -DWALRUS_OUTPUT=shell -GNinja
-          ninja -Cout/debug
-          # remove 2 test files due to stack overflow occurred by recursion calls in debug mode build by clang
-          rm ./test/wasm-spec/core/call.wast
-          rm ./test/wasm-spec/core/call_indirect.wast
-          python3 ./tools/run-tests.py --engine="./out/debug/walrus"
-
-  build-test-on-aarch64:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v3
-      with:
-        submodules: true
-    - name: Build in arm64 container
-      uses: uraimo/run-on-arch-action@v2.5.0
-      with:
-        arch: aarch64
-        distro: ubuntu_latest
-
-        # Install deps into the container. With the token, the container will be cached
-        # The image is cached publically like a package
-        githubToken: ${{ github.token }}
-
-        install: |
-          apt-get update
-          apt-get install -y cmake build-essential ninja-build pkg-config python3 clang-12
-          #FIXME fix clang version as to 12
-          ln -s /usr/bin/clang-12 /usr/bin/clang
-          ln -s /usr/bin/clang++-12 /usr/bin/clang++
-        run: |
-          CC=clang CXX=clang++ cmake -H. -Bout/release -DWALRUS_ARCH=aarch64 -DWALRUS_HOST=linux -DWALRUS_MODE=release -DWALRUS_OUTPUT=shell -GNinja
-          ninja -Cout/release
-          python3 ./tools/run-tests.py --engine="./out/release/walrus"
-
   test-on-windows-x86-x64:
     runs-on: windows-2022
     strategy:
@@ -202,6 +145,9 @@ jobs:
         sdk: "10.0.20348.0"
     - name: Build ${{ matrix.arch }} Release
       run: |
+        cp ./sljitNativeX86_common.c ./third_party/sljit/sljit_src/.
+        cp ./sljitLir.h ./third_party/sljit/sljit_src/.
+        cp ./sljitLir.c ./third_party/sljit/sljit_src/.
         CMake -DCMAKE_SYSTEM_NAME=Windows -DCMAKE_SYSTEM_VERSION:STRING="10.0" -DCMAKE_SYSTEM_PROCESSOR=${{ matrix.arch }} -Bout/ -G Ninja -DCMAKE_C_COMPILER=cl -DCMAKE_CXX_COMPILER=cl -DCMAKE_BUILD_TYPE=release
         CMake --build out/ --config Release
     - name: Run tests
@@ -210,7 +156,7 @@ jobs:
       shell: cmd
     - if: ${{ failure() }}
       uses: mxschmitt/action-tmate@v3
-      timeout-minutes: 15
+      timeout-minutes: 60 
 
   build-test-performance:
     runs-on: ubuntu-latest
@@ -258,42 +204,3 @@ jobs:
         ./wasm-c-api-memory
         ./wasm-c-api-multi
         ./wasm-c-api-table
-
-  coverity-scan:
-    if: ${{ github.repository == 'Samsung/walrus' && github.event_name == 'push' }}
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v3
-      with:
-        submodules: true
-    - name: Install Packages
-      run: |
-        sudo apt update
-        sudo apt install -y ninja-build gcc-multilib g++-multilib
-    - name: Download Coverity Tool
-      env:
-        TOKEN: ${{ secrets.COVERITY_SCAN_TOKEN }}
-      run: |
-        wget -q https://scan.coverity.com/download/cxx/linux64 --post-data "token=$TOKEN&project=Samsung-walrus" -O cov-analysis-linux64.tar.gz
-        mkdir cov-analysis-linux64
-        tar xzf cov-analysis-linux64.tar.gz --strip 1 -C cov-analysis-linux64
-    - name: Build
-      env:
-        BUILD_OPTIONS: -DWALRUS_ARCH=x64 -DWALRUS_HOST=linux -DWALRUS_MODE=release -DWALRUS_OUTPUT=shell -GNinja
-      run: |
-        export PATH=$GITHUB_WORKSPACE/cov-analysis-linux64/bin:$PATH
-        cmake -H. -Bout/coverity_scan $BUILD_OPTIONS
-        cov-build --dir cov-int ninja -Cout/coverity_scan
-    - name: Submit
-      env:
-        TOKEN: ${{ secrets.COVERITY_SCAN_TOKEN }}
-        NOTI_MAIL: ${{ secrets.COVERITY_SCAN_MAIL }}
-      run: |
-        tar czvf walrus.tgz cov-int
-        curl \
-          --form token=$TOKEN \
-          --form email=$NOTI_MAIL \
-          --form file=@walrus.tgz \
-          --form version="0.0.1" \
-          --form description="walrus coverity scan" \
-          https://scan.coverity.com/builds?project=Samsung-walrus

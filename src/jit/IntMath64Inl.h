@@ -16,6 +16,12 @@
 
 /* Only included by jit-backend.cc */
 
+#if defined(COMPILER_MSVC)
+#include <intrin.h>
+#define __builtin_popcount __popcnt
+#define __builtin_popcountl __popcnt
+#endif
+
 static void emitStoreImmediate(sljit_compiler* compiler, Operand* result, Instruction* instr)
 {
     sljit_sw offset = static_cast<sljit_sw>(result->offset << 2);
