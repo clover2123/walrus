@@ -104,13 +104,14 @@ jobs:
         sudo apt install -y ninja-build gcc-multilib g++-multilib
     - name: Build x86
       env:
-        BUILD_OPTIONS: -DWALRUS_ARCH=x86 -DWALRUS_HOST=linux -DWALRUS_MODE=debug -DWALRUS_OUTPUT=shell -GNinja
+        BUILD_OPTIONS: -DWALRUS_ARCH=x86 -DWALRUS_HOST=linux -DWALRUS_MODE=debug -DWALRUS_OUTPUT=shell -DWALRUS_EXTENDED_FEATURES=ON -GNinja
       run: |
         cmake -H. -Bout/linux/x86 $BUILD_OPTIONS
         ninja -Cout/linux/x86
     - name: Run Tests
       run: |
           $RUNNER --engine="$GITHUB_WORKSPACE/out/linux/x86/walrus"
+          $RUNNER --engine="$GITHUB_WORKSPACE/out/linux/x86/walrus" wasm-test-extended
           $RUNNER --jit --engine="$GITHUB_WORKSPACE/out/linux/x86/walrus"
 
   build-test-on-x64:
@@ -125,13 +126,14 @@ jobs:
         sudo apt install -y ninja-build gcc-multilib g++-multilib
     - name: Build x64
       env:
-        BUILD_OPTIONS: -DWALRUS_ARCH=x64 -DWALRUS_HOST=linux -DWALRUS_MODE=debug -DWALRUS_OUTPUT=shell -GNinja
+        BUILD_OPTIONS: -DWALRUS_ARCH=x64 -DWALRUS_HOST=linux -DWALRUS_MODE=debug -DWALRUS_OUTPUT=shell -DWALRUS_EXTENDED_FEATURES=ON -GNinja
       run: |
         cmake -H. -Bout/linux/x64 $BUILD_OPTIONS
         ninja -Cout/linux/x64
     - name: Run Tests
       run: |
          $RUNNER --engine="$GITHUB_WORKSPACE/out/linux/x64/walrus"
+         $RUNNER --engine="$GITHUB_WORKSPACE/out/linux/x64/walrus" wasm-test-extended
          $RUNNER --jit --engine="$GITHUB_WORKSPACE/out/linux/x64/walrus"
 
   build-on-x64-with-perf:
@@ -171,7 +173,7 @@ jobs:
           apt-get update
           apt-get install -y cmake build-essential ninja-build pkg-config python3 clang git
         run: |
-          CC=clang CXX=clang++ cmake -H. -Bout/debug -DWALRUS_ARCH=arm -DWALRUS_HOST=linux -DWALRUS_MODE=debug -DWALRUS_OUTPUT=shell -GNinja
+          CC=clang CXX=clang++ cmake -H. -Bout/debug -DWALRUS_ARCH=arm -DWALRUS_HOST=linux -DWALRUS_MODE=debug -DWALRUS_OUTPUT=shell -DWALRUS_EXTENDED_FEATURES=ON -GNinja
           CC=clang CXX=clang++ cmake -H. -Bout/pure -DWALRUS_ARCH=arm -DWALRUS_HOST=linux -DWALRUS_MODE=debug -DWALRUS_OUTPUT=shell -DWALRUS_WASI=OFF -GNinja
           ninja -Cout/debug
           ninja -Cout/pure
@@ -179,6 +181,7 @@ jobs:
           rm ./test/wasm-spec/core/call.wast
           rm ./test/wasm-spec/core/call_indirect.wast
           python3 ./tools/run-tests.py --engine="./out/debug/walrus"
+          python3 ./tools/run-tests.py --engine="./out/debug/walrus" wasm-test-extended
           python3 ./tools/run-tests.py --jit --engine="./out/debug/walrus"
           python3 ./tools/run-tests.py --engine="./out/pure/walrus" basic-tests wasm-test-core jit
           python3 ./tools/run-tests.py --jit --engine="./out/pure/walrus" basic-tests wasm-test-core jit
@@ -203,11 +206,12 @@ jobs:
           apt-get update
           apt-get install -y cmake build-essential ninja-build pkg-config python3 clang git
         run: |
-          CC=clang CXX=clang++ cmake -H. -Bout/release -DWALRUS_ARCH=aarch64 -DWALRUS_HOST=linux -DWALRUS_MODE=release -DWALRUS_OUTPUT=shell -GNinja
+          CC=clang CXX=clang++ cmake -H. -Bout/release -DWALRUS_ARCH=aarch64 -DWALRUS_HOST=linux -DWALRUS_MODE=release -DWALRUS_OUTPUT=shell -DWALRUS_EXTENDED_FEATURES=ON -GNinja
           CC=clang CXX=clang++ cmake -H. -Bout/pure -DWALRUS_ARCH=aarch64 -DWALRUS_HOST=linux -DWALRUS_MODE=release -DWALRUS_OUTPUT=shell -DWALRUS_WASI=OFF -GNinja
           ninja -Cout/release
           ninja -Cout/pure
           python3 ./tools/run-tests.py --engine="./out/release/walrus"
+          python3 ./tools/run-tests.py --engine="./out/release/walrus" wasm-test-extended
           python3 ./tools/run-tests.py --jit --engine="./out/release/walrus"
           python3 ./tools/run-tests.py --engine="./out/pure/walrus" basic-tests wasm-test-core jit
           python3 ./tools/run-tests.py --jit --engine="./out/pure/walrus" basic-tests wasm-test-core jit
